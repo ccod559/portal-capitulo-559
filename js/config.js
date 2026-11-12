@@ -14,7 +14,7 @@ const SITE_CONFIG = {
 
   /* ---------- Calendário ---------- */
   timezone: "America/Bahia",   // fuso usado para mostrar datas e horários
-  refreshMinutes: 5,           // de quantos em quantos minutos o site consulta o Google Agenda (com a página aberta)
+  refreshMinutes: 3,           // de quantos em quantos minutos o site consulta o Google Agenda (com a página aberta)
 
   // Calendário padrão do Google: só aparece se nenhuma das duas opções abaixo estiver preenchida.
   calendarEmbedUrl: "https://calendar.google.com/calendar/embed?src=392370902585d36add482d235cc7dd35e470ee275405b4e0a935f009a26653c4%40group.calendar.google.com&ctz=America%2FBahia",
