@@ -39,9 +39,9 @@ const SITE_CONFIG = {
   ],
 
   /* ---------- Fale com a Gestão ---------- */
-  googleFormsUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeaKL_CTHhWCWj7jnx_FiPWFLRpEdabMhPjO6gVc9UHv9Rtbw/viewform?usp=publish-editor",
+  googleFormsUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeaKL_CTHhWCWj7jnx_FiPWFLRpEdabMhPjO6gVc9UHv9Rtbw/viewform?usp=dialog",
   googleFormsEmbedUrl: "",
   // FORMULÁRIO PRÓPRIO: códigos dos campos do seu Google Forms (veja o README).
   // Vazio = o site mostra o formulário padrão do Google (botão + formulário incorporado).
-  formEntries: { suggestion: "AAA", question: "BBB", complaint: "CCC" }
+  formEntries: { suggestion: "701051997=AAA&", question: "985022763=BBB", complaint: "162022653=CCC" }
 };
