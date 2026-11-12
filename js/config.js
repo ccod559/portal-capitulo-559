@@ -43,5 +43,5 @@ const SITE_CONFIG = {
   googleFormsEmbedUrl: "",
   // FORMULÁRIO PRÓPRIO: códigos dos campos do seu Google Forms (veja o README).
   // Vazio = o site mostra o formulário padrão do Google (botão + formulário incorporado).
-  formEntries: { suggestion: "", question: "", complaint: "" }
+  formEntries: { suggestion: "AAA", question: "BBB", complaint: "CCC" }
 };
