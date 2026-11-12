@@ -22,7 +22,7 @@ const SITE_CONFIG = {
   calendarPublicUrl: "",
 
   // CALENDÁRIO PRÓPRIO (escolha UMA opção; veja o README). Sem nenhuma, o site mostra o calendário padrão acima.
-  calendarFeedUrl: "https://script.google.com/macros/s/AKfycby_K4TYjndqFK-nXSm7Te-ZMUs9eEv38NCUJvwvbq03Op3AJKJQt6YzASaGdkz7UVE/exec",  // Opção A (recomendada): endereço do Google Apps Script (termina em /exec)
+  calendarFeedUrl: "https://script.google.com/macros/s/AKfycbzy28MMATrihwwm4pclZPOPsCkUHzJyna4B0ww1LpInEmvNwBDvJ8KatBFxKjHygLM/exec",  // Opção A (recomendada): endereço do Google Apps Script (termina em /exec)
   calendarApiKey: "",   // Opção B: chave de API do Google Calendar (restrita ao seu site)
 
   // Categorias (legenda do site). Um evento entra numa categoria de duas formas:
