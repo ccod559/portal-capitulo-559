@@ -39,7 +39,7 @@ const SITE_CONFIG = {
   ],
 
   /* ---------- Fale com a Gestão ---------- */
-  googleFormsUrl: "",
+  googleFormsUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeaKL_CTHhWCWj7jnx_FiPWFLRpEdabMhPjO6gVc9UHv9Rtbw/viewform?usp=publish-editor",
   googleFormsEmbedUrl: "",
   // FORMULÁRIO PRÓPRIO: códigos dos campos do seu Google Forms (veja o README).
   // Vazio = o site mostra o formulário padrão do Google (botão + formulário incorporado).
