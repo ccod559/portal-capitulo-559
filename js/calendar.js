@@ -148,12 +148,13 @@ function rr(x,X,Y,W,H,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);
 function fit(x,t,w){if(x.measureText(t).width<=w)return t;while(t.length>1&&x.measureText(t+"…").width>w)t=t.slice(0,-1);return t+"…"}
 function wrap(x,t,w,max){var o=[],l="";t.split(/\s+/).forEach(function(p){var n=l?l+" "+p:p;if(l&&x.measureText(n).width>w){o.push(l);l=p}else l=n});if(l)o.push(l);
   if(o.length>max){o=o.slice(0,max);o[max-1]=fit(x,o[max-1]+"…",w)}return o}
-function paint(logo){
+function paint(logo,mode){
   var W=1080,P=44,SC=1.5,L=layout(),map=byDay(),cur=S.y+"-"+pad(S.m+1),I=C.site||{},today=dkey(new Date()),
   K={bg:css("--bg","#f8f5f1"),sf:css("--sf","#ffffff"),sf2:css("--sf2","#faf6f1"),tx:css("--tx","#2a1a1c"),mu:css("--mu","#7a6a6c"),ln:css("--ln","#eadfd4"),pr:css("--pr","#9b0f18"),soft:css("--soft","#fbe8e6"),gold:css("--gold","#c8962e")},
   dark=document.documentElement.classList.contains("dark"),
   SF='"Cormorant Garamond",Georgia,serif',SN='Inter,system-ui,Arial,sans-serif',
-  evs=S.month.filter(function(e){return e.ek>=cur+"-01"&&e.sk<=cur+"-31"}).sort(function(a,b){return a.ts-b.ts}),MAXL=26;
+  isC=mode==="cal",isL=mode==="list",
+  evs=S.month.filter(function(e){return e.ek>=cur+"-01"&&e.sk<=cur+"-31"}).sort(function(a,b){return a.ts-b.ts}),MAXL=40;
 
   function render(x,H){
     var y=P,i,cw0=W-2*P;
@@ -178,13 +179,13 @@ function paint(logo){
     y+=60;
 
     /* legenda */
-    x.font="600 18px "+SN;var lx=P;
+    if(isC){x.font="600 18px "+SN;var lx=P;
     cats.forEach(function(c){var w=x.measureText(c.name).width+30;if(lx+w>W-P){lx=P;y+=30}
       x.fillStyle=hex(c);x.beginPath();x.arc(lx+6,y+12,6,0,7);x.fill();x.fillStyle=K.mu;x.fillText(c.name,lx+20,y+18);lx+=w+16});
     y+=30+18;
 
     /* grade do mês */
-    var gp=22,gap=8,cw=(cw0-2*gp-6*gap)/7,ch=130,gh=gp+34+L.rows*(ch+gap)-gap+gp;
+    var gp=22,gap=8,cw=(cw0-2*gp-6*gap)/7,ch=162,gh=gp+34+L.rows*(ch+gap)-gap+gp;
     x.save();x.shadowColor="rgba(74,10,16,"+(dark?".5":".10")+")";x.shadowBlur=36;x.shadowOffsetY=12;rr(x,P,y,cw0,gh,32);x.fillStyle=K.sf;x.fill();x.restore();
     rr(x,P,y,cw0,gh,32);x.strokeStyle=K.ln;x.lineWidth=1.5;x.stroke();
     var gx=P+gp,gy=y+gp;
@@ -198,15 +199,16 @@ function paint(logo){
       x.beginPath();x.arc(cx+26,cy+26,16,0,7);
       if(isT){x.fillStyle=K.sf2;x.fill();x.lineWidth=2.5;x.strokeStyle=K.pr;x.stroke()}
       x.fillStyle=K.tx;x.font="700 18px "+SN;x.textAlign="center";x.fillText(+k.slice(8),cx+26,cy+32);x.textAlign="left";
-      ds.slice(0,2).forEach(function(ev,n){
+      ds.slice(0,3).forEach(function(ev,n){
         var cc=hex(cat(ev)),ey=cy+52+n*29,bw=cw-16;
         x.save();rr(x,cx+8,ey,bw,25,7);x.clip();x.fillStyle=mix(cc,K.sf,.16);x.fillRect(cx+8,ey,bw,25);x.fillStyle=cc;x.fillRect(cx+8,ey,4,25);x.restore();
         x.font="600 13px "+SN;x.fillStyle=K.tx;x.fillText(fit(x,(ev.allDay?"":tm(ev.start)+" ")+ev.title,bw-16),cx+18,ey+17)});
-      if(ds.length>2){x.font="600 14px "+SN;x.fillStyle=K.mu;x.fillText("+"+(ds.length-2)+" mais",cx+12,cy+52+58+16)}
+      if(ds.length>3){x.font="600 14px "+SN;x.fillStyle=K.mu;x.fillText("+"+(ds.length-3)+" mais",cx+12,cy+52+87+16)}
       x.globalAlpha=1}
-    y+=gh+46;
+    y+=gh+46}
 
     /* lista de atividades */
+    if(isL){
     x.font="800 34px "+SN;x.fillStyle=K.tx;x.fillText("Atividades do mês",P,y+30);
     x.font="600 19px "+SN;x.fillStyle=K.mu;x.textAlign="right";x.fillText(evs.length?evs.length+(evs.length>1?" atividades":" atividade"):"",W-P,y+28);x.textAlign="left";
     y+=56;
@@ -229,6 +231,7 @@ function paint(logo){
       x.font="700 16px "+SN;x.fillStyle=dark?hex(c):mix(hex(c),"#000000",.72);x.textAlign="center";x.fillText(c.name,px+tagW/2,py+22);x.textAlign="left";
       y+=h+14});
     if(evs.length>MAXL){x.font="600 20px "+SN;x.fillStyle=K.mu;x.textAlign="center";x.fillText("+ "+(evs.length-MAXL)+" atividades. Veja todas no portal.",W/2,y+26);x.textAlign="left";y+=44}
+    }
 
     /* rodapé */
     y+=10;x.fillStyle=K.ln;x.fillRect(P,y,cw0,1.5);y+=40;
@@ -237,17 +240,17 @@ function paint(logo){
     return y+P}
 
   var probe=document.createElement("canvas").getContext("2d"),H=Math.ceil(render(probe,6000)),cv=document.createElement("canvas");
-  cv.width=Math.round(W*SC);cv.height=Math.round(H*SC);var x=cv.getContext("2d");x.scale(SC,SC);render(x,H);return cv}
+  if(W*H*SC*SC>12e6)SC=Math.sqrt(12e6/(W*H));cv.width=Math.round(W*SC);cv.height=Math.round(H*SC);var x=cv.getContext("2d");x.scale(SC,SC);render(x,H);return cv}
 function save(b,n){var a=el("a",{href:URL.createObjectURL(b),download:n});document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},4000)}
-function exportPng(btn){
+function exportPng(btn,mode){
   if(S.st.month==="load")return;var old=btn.textContent;btn.disabled=true;btn.textContent="Gerando…";
   var fonts=document.fonts&&document.fonts.load?Promise.all(['700 20px "Cormorant Garamond"','400 16px Inter','600 16px Inter','700 16px Inter','800 16px Inter'].map(function(f){return document.fonts.load(f)})).catch(function(){}):Promise.resolve();
   var li=new Promise(function(r){var im=new Image();im.onload=function(){r(im)};im.onerror=function(){r(null)};im.src="assets/images/logo.png"});
   Promise.all([fonts,li]).then(function(v){
-    function make(l){return new Promise(function(res,rej){try{paint(l).toBlob(function(b){b?res(b):rej(new Error("blob"))},"image/png")}catch(e){rej(e)}})}
+    function make(l){return new Promise(function(res,rej){try{paint(l,mode).toBlob(function(b){b?res(b):rej(new Error("blob"))},"image/png")}catch(e){rej(e)}})}
     return make(v[1]).catch(function(){return make(null)})})
-  .then(function(blob){var name="calendario-559-"+S.y+"-"+pad(S.m+1)+".png",f=null;try{f=new File([blob],name,{type:"image/png"})}catch(e){}
-    if(f&&navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches)return navigator.share({files:[f],title:"Calendário de "+MN[S.m]}).catch(function(e){if(!e||e.name!=="AbortError")save(blob,name)});
+  .then(function(blob){var name=(mode==="list"?"atividades-559-":"calendario-559-")+S.y+"-"+pad(S.m+1)+".png",f=null;try{f=new File([blob],name,{type:"image/png"})}catch(e){}
+    if(f&&navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches)return navigator.share({files:[f],title:(mode==="list"?"Atividades de ":"Calendário de ")+MN[S.m]}).catch(function(e){if(!e||e.name!=="AbortError")save(blob,name)});
     save(blob,name)})
   .catch(function(){R.status.textContent="Não foi possível gerar a imagem neste aparelho."})
   .then(function(){btn.disabled=false;btn.textContent=old})}
@@ -261,7 +264,7 @@ function init(box){
   nv.appendChild(nb("‹","Mês anterior",function(){step(-1)},"icon"));
   nv.appendChild(nb("Hoje","Ir para hoje",function(){var k=dkey(new Date());go(+k.slice(0,4),+k.slice(5,7)-1,k)}));
   nv.appendChild(nb("›","Próximo mês",function(){step(1)},"icon"));
-  var tl=el("div",{"class":"cal-tools"}),sv=nb("Salvar imagem","Salvar imagem do mês",function(){exportPng(sv)});tl.appendChild(nv);tl.appendChild(sv);
+  var tl=el("div",{"class":"cal-tools"}),sv=nb("Salvar calendário","Salvar imagem do calendário do mês",function(){exportPng(sv,"cal")}),sa=nb("Salvar atividades","Salvar imagem da lista de atividades do mês",function(){exportPng(sa,"list")}),sg=el("div",{"class":"cal-nav"});sv.style.cssText=sa.style.cssText="flex:1;white-space:nowrap;padding-inline:.7rem";sg.style.cssText="flex:1 1 100%";sg.appendChild(sv);sg.appendChild(sa);tl.appendChild(nv);tl.appendChild(sg);
   bar.appendChild(t);bar.appendChild(tl);
   var lg=el("div",{"class":"legend"});function legend(){lg.textContent="";cats.forEach(function(c){var s=el("span",0,c.name);s.style.setProperty("--c",hex(c));lg.appendChild(s)})}legend();
   if(window.MutationObserver)new MutationObserver(function(){legend();draw()}).observe(document.documentElement,{attributes:true,attributeFilter:["class"]});
