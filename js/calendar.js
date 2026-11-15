@@ -119,6 +119,7 @@ function drawPanel(){
 
 function drawStatus(){
   var a=S.st.month,b=S.st.up,t;
+  if(a==="err"||b==="err"){R.status.textContent="Não foi possível carregar a agenda agora. ";var rb=el("button",{type:"button","class":"link"},"Tentar de novo");rb.addEventListener("click",function(){refresh(false)});R.status.appendChild(rb);return}
   if(a==="stale"||b==="stale")t="Não foi possível atualizar agora. Mostrando dados salvos"+(S.ct?" às "+tm(new Date(S.ct)):"")+".";
   else if(a==="ok"&&b==="ok"&&S.upd)t="Atualizado às "+tm(S.upd)+".";
   else t="Atualizando…";
@@ -147,9 +148,9 @@ function mix(a,b,p){var x=rgb(a),y=rgb(b);return"rgb("+x.map(function(v,i){retur
 function rr(x,X,Y,W,H,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);x.arcTo(X+W,Y+H,X,Y+H,r);x.arcTo(X,Y+H,X,Y,r);x.arcTo(X,Y,X+W,Y,r);x.closePath()}
 function fit(x,t,w){if(x.measureText(t).width<=w)return t;while(t.length>1&&x.measureText(t+"…").width>w)t=t.slice(0,-1);return t+"…"}
 function wrap(x,t,w,max){var o=[],l="";t.split(/\s+/).forEach(function(p){var n=l?l+" "+p:p;if(l&&x.measureText(n).width>w){o.push(l);l=p}else l=n});if(l)o.push(l);
-  if(o.length>max){o=o.slice(0,max);o[max-1]=fit(x,o[max-1]+"…",w)}return o}
-function paint(logo,mode){
-  var W=1920,P=72,SC=2,L=layout(),map=byDay(),cur=S.y+"-"+pad(S.m+1),I=C.site||{},today=dkey(new Date()),
+  if(o.length>max){o=o.slice(0,max);o[max-1]+="…"}return o.map(function(t){return fit(x,t,w)})}
+function paint(logo,mode,q){
+  var W=1920,P=72,SC=3,L=layout(),map=byDay(),cur=S.y+"-"+pad(S.m+1),I=C.site||{},today=dkey(new Date()),
   K={bg:css("--bg","#f8f5f1"),sf:css("--sf","#ffffff"),sf2:css("--sf2","#faf6f1"),tx:css("--tx","#2a1a1c"),mu:css("--mu","#7a6a6c"),ln:css("--ln","#eadfd4"),pr:css("--pr","#9b0f18"),soft:css("--soft","#fbe8e6"),gold:css("--gold","#c8962e")},
   dark=document.documentElement.classList.contains("dark"),
   SF='"Cormorant Garamond",Georgia,serif',SN='Inter,system-ui,Arial,sans-serif',isC=mode==="cal",
@@ -158,7 +159,7 @@ function paint(logo,mode){
 
   function render(x,H){
     var y,cw0=W-2*P,i;
-    x.textBaseline="alphabetic";x.textAlign="left";x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
+    x.textBaseline="alphabetic";x.textAlign="left";x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";try{x.textRendering="geometricPrecision";x.fontKerning="normal"}catch(e){}
     x.fillStyle=K.bg;x.fillRect(0,0,W,H);
     var ba=x.createLinearGradient(0,0,W,0);ba.addColorStop(0,K.pr);ba.addColorStop(1,K.gold);x.fillStyle=ba;x.fillRect(0,0,W,10);
     y=P+10;
@@ -242,32 +243,40 @@ function paint(logo,mode){
     return y+P}
 
   var probe=document.createElement("canvas").getContext("2d"),H=Math.ceil(render(probe,6000)),cv=document.createElement("canvas");
-  if(W*H*SC*SC>14e6)SC=Math.sqrt(14e6/(W*H));
+  /* resolução máxima que o aparelho aguenta: 3x (5760 px de largura) no computador; no celular o limite de área do navegador é menor */
+  var coarse=window.matchMedia&&matchMedia("(pointer:coarse)").matches,LIM=coarse?12e6:40e6;SC=(coarse?2.6:3)*(q||1);
+  if(W*H*SC*SC>LIM)SC=Math.sqrt(LIM/(W*H));if(H*SC>15000)SC=15000/H;
   cv.width=Math.round(W*SC);cv.height=Math.round(H*SC);var x=cv.getContext("2d");x.scale(SC,SC);render(x,H);return cv}
 function save(b,n){var a=el("a",{href:URL.createObjectURL(b),download:n});document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},4000)}
+var busyExp=false;
 function exportPng(btn,mode){
-  if(S.st.month==="load")return;var old=btn.textContent;btn.disabled=true;btn.textContent="Gerando…";
+  if(busyExp||S.st.month==="load")return;busyExp=true;
+  var all=[].slice.call(document.querySelectorAll("[data-save]")),old=btn.textContent;all.forEach(function(b){b.disabled=true});btn.textContent="Gerando…";
   var fonts=document.fonts&&document.fonts.load?Promise.all(['700 20px "Cormorant Garamond"','400 16px Inter','600 16px Inter','700 16px Inter','800 16px Inter'].map(function(f){return document.fonts.load(f)})).catch(function(){}):Promise.resolve();
   var li=new Promise(function(r){var im=new Image();im.onload=function(){r(im)};im.onerror=function(){r(null)};im.src="assets/images/logo.png"});
   Promise.all([fonts,li]).then(function(v){
-    function make(l){return new Promise(function(res,rej){try{paint(l,mode).toBlob(function(b){b?res(b):rej(new Error("blob"))},"image/png")}catch(e){rej(e)}})}
-    return make(v[1]).catch(function(){return make(null)})})
+    /* a imagem só é desenhada ao tocar no botão; a memória é liberada logo depois; se o aparelho não aguentar, tenta em resolução menor */
+    function make(l,q){return new Promise(function(res,rej){setTimeout(function(){var cv;try{cv=paint(l,mode,q);cv.toBlob(function(b){cv.width=cv.height=0;b?res(b):rej(new Error("blob"))},"image/png")}catch(e){if(cv)cv.width=cv.height=0;rej(e)}},30)})}
+    function go(l,q,n){return make(l,q).catch(function(e){if(l&&e&&e.name==="SecurityError")return go(null,q,n);if(n>=2)return Promise.reject(e);return go(l,q*.7,n+1)})}
+    return go(v[1],1,0)})
   .then(function(blob){var name=(mode==="list"?"atividades-559-":"calendario-559-")+S.y+"-"+pad(S.m+1)+".png",f=null;try{f=new File([blob],name,{type:"image/png"})}catch(e){}
     if(f&&navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches)return navigator.share({files:[f],title:(mode==="list"?"Atividades de ":"Calendário de ")+MN[S.m]}).catch(function(e){if(!e||e.name!=="AbortError")save(blob,name)});
     save(blob,name)})
   .catch(function(){R.status.textContent="Não foi possível gerar a imagem neste aparelho."})
-  .then(function(){btn.disabled=false;btn.textContent=old})}
+  .then(function(){all.forEach(function(b){b.disabled=false});btn.textContent=old;busyExp=false})}
 
 /* ---------- montagem ---------- */
 function init(box){
   var n=dkey(new Date());S.y=+n.slice(0,4);S.m=+n.slice(5,7)-1;box.classList.add("custom");prune();
+  /* estilo extra: textos longos sem espaço (ou links) quebram dentro do cartão em vez de vazar */
+  var xs=el("style");xs.textContent=".item .tx{min-width:0;overflow-wrap:anywhere}.evb,.evb *,.cal-list h4{overflow-wrap:anywhere}";document.head.appendChild(xs);
   var bar=el("div",{"class":"cal-bar"}),t=el("h3",{"aria-live":"polite"}),nv=el("div",{"class":"cal-nav"});
   function nb(txt,lab,fn,cls){var b=el("button",{type:"button","class":"btn sec "+(cls||""),"aria-label":lab},txt);b.addEventListener("click",fn);return b}
   function step(d){var m=S.m+d,y=S.y;if(m<0){m=11;y--}if(m>11){m=0;y++}go(y,m,null)}
   nv.appendChild(nb("‹","Mês anterior",function(){step(-1)},"icon"));
   nv.appendChild(nb("Hoje","Ir para hoje",function(){var k=dkey(new Date());go(+k.slice(0,4),+k.slice(5,7)-1,k)}));
   nv.appendChild(nb("›","Próximo mês",function(){step(1)},"icon"));
-  var tl=el("div",{"class":"cal-tools"}),sv=nb("Salvar calendário","Salvar imagem do calendário do mês",function(){exportPng(sv,"cal")}),sa=nb("Salvar atividades","Salvar imagem da lista de atividades do mês",function(){exportPng(sa,"list")}),sg=el("div",{"class":"cal-nav"});sv.style.cssText=sa.style.cssText="flex:1;white-space:nowrap;padding-inline:.7rem";sg.style.cssText="flex:1 1 100%";sg.appendChild(sv);sg.appendChild(sa);tl.appendChild(nv);tl.appendChild(sg);
+  var tl=el("div",{"class":"cal-tools"}),sv=nb("Salvar calendário","Salvar imagem do calendário do mês",function(){exportPng(sv,"cal")}),sa=nb("Salvar atividades","Salvar imagem da lista de atividades do mês",function(){exportPng(sa,"list")}),sg=el("div",{"class":"cal-nav"});sv.style.cssText=sa.style.cssText="flex:1;white-space:nowrap;padding-inline:.7rem";sg.style.cssText="flex:1 1 100%";sv.setAttribute("data-save","1");sa.setAttribute("data-save","1");sg.appendChild(sv);sg.appendChild(sa);tl.appendChild(nv);tl.appendChild(sg);
   bar.appendChild(t);bar.appendChild(tl);
   var lg=el("div",{"class":"legend"});function legend(){lg.textContent="";cats.forEach(function(c){var s=el("span",0,c.name);s.style.setProperty("--c",hex(c));lg.appendChild(s)})}legend();
   if(window.MutationObserver)new MutationObserver(function(){legend();draw()}).observe(document.documentElement,{attributes:true,attributeFilter:["class"]});
